@@ -1,0 +1,7 @@
+{
+    "editor.inlineSuggest.showToolbar": "always",
+    "python.analysis.extraPaths": [
+        "./src/RTDE_Python_Client_Library"
+    ],
+
+}

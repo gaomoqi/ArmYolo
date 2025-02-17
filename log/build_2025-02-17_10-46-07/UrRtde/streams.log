@@ -1,0 +1,15 @@
+[0.572s] Invoking command in '/home/gaomoqi/ArmYolo_ws/build/UrRtde': CONDA_PROMPT_MODIFIER=(torch) PYTHONPATH=/home/gaomoqi/ArmYolo_ws/build/UrRtde/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/gaomoqi/ArmYolo_ws/install/UrRtde/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/gaomoqi/ArmYolo_ws/build/UrRtde/build --no-deps
+[0.703s] running develop
+[0.781s] running egg_info
+[0.782s] creating UrRtde.egg-info
+[0.782s] writing UrRtde.egg-info/PKG-INFO
+[0.782s] writing dependency_links to UrRtde.egg-info/dependency_links.txt
+[0.782s] writing top-level names to UrRtde.egg-info/top_level.txt
+[0.782s] writing manifest file 'UrRtde.egg-info/SOURCES.txt'
+[0.783s] reading manifest file 'UrRtde.egg-info/SOURCES.txt'
+[0.783s] writing manifest file 'UrRtde.egg-info/SOURCES.txt'
+[0.784s] running build_ext
+[0.784s] Creating /home/gaomoqi/ArmYolo_ws/install/UrRtde/lib/python3.10/site-packages/UrRtde.egg-link (link to .)
+[0.785s] 
+[0.785s] Installed /home/gaomoqi/ArmYolo_ws/build/UrRtde
+[0.807s] Invoked command in '/home/gaomoqi/ArmYolo_ws/build/UrRtde' returned '0': CONDA_PROMPT_MODIFIER=(torch) PYTHONPATH=/home/gaomoqi/ArmYolo_ws/build/UrRtde/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/gaomoqi/ArmYolo_ws/install/UrRtde/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/gaomoqi/ArmYolo_ws/build/UrRtde/build --no-deps

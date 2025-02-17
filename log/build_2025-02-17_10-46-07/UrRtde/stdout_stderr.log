@@ -1,0 +1,13 @@
+running develop
+running egg_info
+creating UrRtde.egg-info
+writing UrRtde.egg-info/PKG-INFO
+writing dependency_links to UrRtde.egg-info/dependency_links.txt
+writing top-level names to UrRtde.egg-info/top_level.txt
+writing manifest file 'UrRtde.egg-info/SOURCES.txt'
+reading manifest file 'UrRtde.egg-info/SOURCES.txt'
+writing manifest file 'UrRtde.egg-info/SOURCES.txt'
+running build_ext
+Creating /home/gaomoqi/ArmYolo_ws/install/UrRtde/lib/python3.10/site-packages/UrRtde.egg-link (link to .)
+
+Installed /home/gaomoqi/ArmYolo_ws/build/UrRtde

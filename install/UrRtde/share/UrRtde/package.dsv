@@ -1,0 +1,6 @@
+source;share/UrRtde/hook/pythonpath.ps1
+source;share/UrRtde/hook/pythonpath.dsv
+source;share/UrRtde/hook/pythonpath.sh
+source;../../build/UrRtde/share/UrRtde/hook/pythonpath_develop.ps1
+source;../../build/UrRtde/share/UrRtde/hook/pythonpath_develop.dsv
+source;../../build/UrRtde/share/UrRtde/hook/pythonpath_develop.sh
