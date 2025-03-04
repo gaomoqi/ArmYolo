@@ -49,7 +49,7 @@ parser.add_argument(
 )
 parser.add_argument(
     "--config",
-    default="/home/gaomoqi/ArmYolo_ws/src/record_arm_configuration.xml",
+    default="/home/gaomoqi/ArmYolo_ws/src/Record_Train/record_arm_configuration.xml",
     help="data configuration file to use (record_arm_configuration.xml)",
 )
 parser.add_argument(

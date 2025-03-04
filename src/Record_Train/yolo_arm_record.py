@@ -11,11 +11,11 @@ import csv
 import recordarm as ra
 
 # 确保输出目录存在
-output_dir = "/home/gaomoqi/ArmYolo_ws/data_2025_1_20"
+output_dir = "/home/gaomoqi/ArmYolo_ws/data_2025_2_27"
 os.makedirs(output_dir, exist_ok=True)
 timestamp = datetime.now().strftime("%Y_%m_%d_%H_%M")
 # Load the YOLO model
-model = YOLO("./src/best.pt")
+model = YOLO("./src/Record_Train/best.pt")
 
 # Set up RealSense pipeline
 pipeline = rs.pipeline()
