@@ -4,7 +4,9 @@ import numpy as np
 import csv
 
 # 读取CSV文件
-filename = '/home/gaomoqi/ArmYolo_ws/record_error&video/error_log.csv'
+filename = 'record_error_2025_03_17_21_25/error_log.csv'
+video_path = 'record_error_2025_03_17_21_25/output.mp4'
+
 data = []
 
 with open(filename, 'r') as csvfile:
@@ -29,8 +31,12 @@ errors = [row[2:] for row in data_sampled]
 fig, (ax_main, ax_frames) = plt.subplots(2, 1, figsize=(20, 15), height_ratios=[3, 1])
 
 # 绘制误差曲线
-for i in range(6):
-    ax_main.plot(timestamps, [error[i] for error in errors], label=f'points_xy_error {i+1}')
+ax_main.plot(timestamps, [error[0] for error in errors], label=f'error_x')
+ax_main.plot(timestamps, [error[1] for error in errors], label=f'error_y')
+ax_main.plot(timestamps, [error[2] for error in errors], label=f'error_w')
+ax_main.plot(timestamps, [error[3] for error in errors], label=f'error_h')
+
+
 
 ax_main.set_xlabel('Time (s)')
 ax_main.set_ylabel('Error')
@@ -39,7 +45,6 @@ ax_main.legend()
 ax_main.grid(True)
 
 # 视频处理部分
-video_path = '/home/gaomoqi/ArmYolo_ws/record_error&video/output.mp4'
 cap = cv2.VideoCapture(video_path)
 
 if not cap.isOpened():

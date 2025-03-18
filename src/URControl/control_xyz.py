@@ -9,9 +9,10 @@ from ultralytics import YOLO
 import joblib
 import os
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from Record_Train.JacobianModel import model
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../Record_Train")))
+from JacobianModel import ImageJacobianNet, model
 
+print(model)
 def connect_to_ur5(ip, port):
     """建立与 UR5 机器人的 TCP 连接"""
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -77,7 +78,7 @@ def detect_feature_points(model, frame):
 
 def predict_velocity(model, velocities):
     """使用神经网络预测 UR5 末端速度"""
-    if velocities.shape != (6,):
+    if velocities.shape != (4,):
         return None
     normalized_input = input_scaler.transform(velocities.reshape(1, -1))
 
@@ -91,7 +92,7 @@ def predict_velocity(model, velocities):
 
 def generate_urscript(v_cmd):
     # print("speed_cmd",v_cmd,"\n")
-    v_cmd = [max(min(v_cmd[i], 0.05), -0.05) for i in range(3)]# 限定速度范围0.05
+    v_cmd = [max(min(v_cmd[i], 0.02), -0.02) for i in range(3)]# 限定速度范围0.05
     v_cmd [3:6] = [0,0,0]
     ur_script = f"""
     speedl({v_cmd}, a=0.5, t=1)
@@ -121,12 +122,15 @@ def draw_bbox_with_depth(frame,  xyxy, label, conf, xywhr):
     cv2.circle(frame, (width_mid_x, width_mid_y), 5, (255, 255, 0), -1)
     cv2.circle(frame, (height_mid_x, height_mid_y), 5, (0, 255, 255), -1)
     
-input_scaler = joblib.load('training_output2025_02_27_16_02/input_scaler.pkl')
-output_scaler = joblib.load('training_output2025_02_27_16_02/output_scaler.pkl')
+input_scaler = joblib.load('training_output2025_03_08_17_59/input_scaler.pkl')
+output_scaler = joblib.load('training_output2025_03_08_17_59/output_scaler.pkl')
+# velocity_model = JacobianModel.model
+velocity_model = torch.load("training_output2025_03_08_17_59/jacobian_model_xyz.pt", map_location=torch.device('cpu'))
+velocity_model.eval()
 
 def main():
-    #----------记录数据---------#
-    data_dir = "recorded_data"
+    # #----------记录数据---------#
+    data_dir = f"record_error_{time.strftime('%Y_%m_%d_%H_%M')}"
     os.makedirs(data_dir, exist_ok=True)
     
     # 使用 mp4v 编解码器，创建 .mp4 文件
@@ -141,7 +145,7 @@ def main():
     start_time = time.time()
     #-----------------------------------#
 
-    ur5_ip = "10.149.230.168"
+    ur5_ip = "10.149.230.1"
     port = 30002
     error_threshold = 10  # 误差阈值
     target_position = None
@@ -149,10 +153,6 @@ def main():
     sock = connect_to_ur5(ur5_ip, port)
 
     yolo_model = YOLO("src/Record_Train/best.pt")
-
-    velocity_model = model
-    velocity_model = torch.load("training_output2025_02_27_16_02/jacobian_model_xyz.pt", map_location=torch.device('cpu'))
-    velocity_model.eval()
     
     pipeline = rs.pipeline()
     config = rs.config()
@@ -178,7 +178,7 @@ def main():
         if target_position is None:
             # target_position = list(map(int,input("请输入目标位置（以空格分隔）：").split()))
             # target_position = np.array([350, 294, 359, 436, 243, 301])#6输入
-            target_position = np.array([0,0,0,0])#4输入
+            target_position = np.array([537, 225, 155, 177])#4输入
             print(target_position)
             continue
 
@@ -186,8 +186,8 @@ def main():
         error_cmd = feature_points - target_position
         error = np.linalg.norm(feature_points - target_position)# 计算误差
 
-        # 记录 error_cmd 和时间戳
-        error_log.write(f"{elapsed_time},{frame_number},{error_cmd[0]},{error_cmd[1]},{error_cmd[2]},{error_cmd[3]},{error_cmd[4]},{error_cmd[5]}\n")        # 在图像上添加时间戳和帧号
+        # ----------------记录 error_cmd 和时间戳-------------------#
+        error_log.write(f"{elapsed_time},{frame_number},{error_cmd[0]},{error_cmd[1]},{error_cmd[2]},{error_cmd[3]}\n")        # 在图像上添加时间戳和帧号
         cv2.putText(frame, f"Time: {elapsed_time:.3f}s Frame: {frame_number}", 
                     (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
 
@@ -197,13 +197,14 @@ def main():
         # 记录 error_cmd、时间戳和帧号
         error_log.write(f"{elapsed_time:.3f},{frame_number},{','.join(map(str, error_cmd))}\n")
         error_log.flush()  # 确保数据立即写入文件
+        #------------------------------------------------------------#
 
         # if error < error_threshold:
         #     print("目标已跟踪完成，暂停运动...")
         #     target_position = None
         #     continue
         
-        image_speed_cmd = np.array([ - error_cmd[i] * 1.5 for i in range(6)])#u = -e*kp
+        image_speed_cmd = np.array([ - error_cmd[i] * 1.5 for i in range(4)])#u = -e*kp
         print("image_speed_cmd", image_speed_cmd,'\n')
         v_cmd = predict_velocity(velocity_model,image_speed_cmd)#根据图像误差预测输入速度
         ur_script = generate_urscript(v_cmd)
@@ -212,8 +213,8 @@ def main():
         
         time.sleep(0.1)
 
-    error_log.close()
-    video_out.release()
+    # error_log.close()
+    # video_out.release()
     cv2.destroyAllWindows()
     pipeline.stop()
 

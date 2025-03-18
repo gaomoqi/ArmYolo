@@ -7,13 +7,90 @@ import cv2
 import os
 from datetime import datetime
 import csv
+def detect_feature_points(model, frame):
+    """使用 YOLO 进行目标跟踪，并计算特征点"""
+    results = model.track(frame, persist=True, classes = [41], device = "cuda")  # 使用 track 进行目标跟踪
+    if not results[0].boxes:
+        return None
 
-# 确保输出目录存在
-output_dir = "./data"
-os.makedirs(output_dir, exist_ok=True)
-timestamp = datetime.now().strftime("%Y_%m_%d_%H_%M")
+    boxes = results[0].boxes.xyxy.cpu().numpy()  # 获取边界框
+    track_ids = results[0].boxes.id.cpu().numpy() if results[0].boxes.id is not None else np.zeros(len(boxes))  # 获取目标 ID
+    feature_points = []
+    all_detections = []
+
+    for i, box in enumerate(boxes):
+        track_id = int(track_ids[i])  # 目标的跟踪 ID
+        conf = results[0].boxes.conf[i].item()  # 置信度
+        all_detections.append((conf, box, track_id))
+
+    if not all_detections:
+        return None
+
+    # 选取置信度最高的目标
+    best_conf, best_box, best_track_id = max(all_detections, key=lambda x: x[0])
+
+    # 计算特征点
+    x_min, y_min, x_max, y_max = best_box
+    center_x, center_y = int((x_min + x_max) / 2), int((y_min + y_max) / 2)
+    width_mid_x, width_mid_y = int((x_min + x_max) / 2), int(y_max)
+    height_mid_x, height_mid_y = int(x_min), int((y_min + y_max) / 2)
+    width = x_max - x_min
+    height = y_max - y_min
+
+    print(f"Track ID {best_track_id} | image_info:", [center_x, center_y, width, height])
+
+    # 绘制目标框、ID 和特征点
+    draw_bbox_with_depth(frame, best_box, f"ID {best_track_id}", best_conf, None)
+
+    return np.array([center_x, center_y, width_mid_x, width_mid_y, height_mid_x, height_mid_y, center_x, center_y, width, height])
+
+def draw_bbox_with_depth(frame, bbox, track_id, conf, depth):
+    x_min, y_min, x_max, y_max = map(int, bbox)
+    color = (0, 255, 0)  # 绿色边界框
+    text_color = (0, 0, 255)  # 红色字体
+    thickness = 2
+
+    # 绘制边界框
+    cv2.rectangle(frame, (x_min, y_min), (x_max, y_max), color, thickness)
+
+    # 计算特征点
+    center_x, center_y = (x_min + x_max) // 2, (y_min + y_max) // 2
+    width_mid_x, width_mid_y = center_x, y_max
+    height_mid_x, height_mid_y = x_min, center_y
+    # 计算边界框的宽度和高度
+    width = x_max - x_min
+    height = y_max - y_min
+
+    # 标注特征点
+    feature_color = (255, 0, 0)  # 蓝色点
+    radius = 5
+    cv2.circle(frame, (center_x, center_y), radius, feature_color, -1)
+    cv2.circle(frame, (width_mid_x, width_mid_y), radius, feature_color, -1)
+    cv2.circle(frame, (height_mid_x, height_mid_y), radius, feature_color, -1)
+
+    # 打印特征点坐标和边界框尺寸
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    font_scale = 0.4
+    font_thickness = 1
+
+    # 中心点坐标
+    cv2.putText(frame, f"({center_x},{center_y})", (center_x + 5, center_y - 5), font, font_scale, text_color, font_thickness)
+
+    # 宽度中点坐标
+    cv2.putText(frame, f"({width_mid_x},{width_mid_y})", (width_mid_x + 5, width_mid_y - 5), font, font_scale, text_color, font_thickness)
+
+    # 高度中点坐标
+    cv2.putText(frame, f"({height_mid_x},{height_mid_y})", (height_mid_x + 5, height_mid_y + 15), font, font_scale, text_color, font_thickness)
+
+    # 边界框尺寸
+    cv2.putText(frame, f"{width}x{height}", (x_min + 5, y_min + 20), font, font_scale, text_color, font_thickness)
+
+    # 置信度 + 目标 ID
+    label = f"ID {track_id} | Conf: {conf:.2f}"
+    cv2.putText(frame, label, (x_min, y_min - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, text_color, 2)
+    
 # Load the YOLO model
-model = YOLO("src/Record_Train/best.pt")
+model = YOLO("src/Record/yolov8n.pt")
 
 # Set up RealSense pipeline
 pipeline = rs.pipeline()
@@ -25,41 +102,6 @@ config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
 # Start the pipeline
 pipeline.start(config)
 
-# Create a VideoWriter object for output
-output_path = os.path.join(output_dir, f"output_realsense_video_{timestamp}.mp4")
-fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-out = cv2.VideoWriter(output_path, fourcc, 30, (640, 480))
-
-def draw_bbox_with_depth(frame, depth_frame, xyxy, label, conf, xywhr):
-    points = np.array(xyxy).reshape((-1, 1, 2)).astype(np.int32)
-    cv2.polylines(frame, [points], isClosed=True, color=(0, 255, 0), thickness=2)
-    
-    x_coords, y_coords = points[:, 0, 0], points[:, 0, 1]
-    center_x, center_y = int(np.mean(x_coords)), int(np.mean(y_coords))
-    width = int(np.linalg.norm(points[0][0] - points[1][0]))
-    height = int(np.linalg.norm(points[1][0] - points[2][0]))
-
-    width_mid_x, width_mid_y = int((x_coords[0] + x_coords[1]) / 2), int((y_coords[0] + y_coords[1]) / 2)
-    height_mid_x, height_mid_y = int((x_coords[0] + x_coords[3]) / 2), int((y_coords[0] + y_coords[3]) / 2)
-    theta = np.arctan2(width_mid_y - center_y, center_x - width_mid_x) * (180 / np.pi)
-
-    depth = depth_frame.get_distance(center_x, center_y)
-
-    cv2.putText(frame, f'Center ({center_x}, {center_y})', (center_x, center_y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 255), 1)
-    cv2.putText(frame, f'Depth: {depth:.2f}m', (center_x, center_y + 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
-    cv2.putText(frame, f'Theta: {theta:.2f} deg', (center_x, center_y + 40), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 255), 2)
-    cv2.putText(frame, f'Width: {width:.2f}', (width_mid_x, width_mid_y + 40), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 255), 2)
-    cv2.putText(frame, f'Height: {height:.2f}', (height_mid_x, height_mid_y + 40), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 255), 2)
-
-    for idx, (x, y) in enumerate(zip(x_coords, y_coords)):
-        cv2.putText(frame, f'P{idx+1} ({x}, {y})', (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 255), 1)
-
-    cv2.circle(frame, (center_x, center_y), 5, (0, 0, 255), -1)
-    cv2.circle(frame, (width_mid_x, width_mid_y), 5, (255, 255, 0), -1)
-    cv2.circle(frame, (height_mid_x, height_mid_y), 5, (0, 255, 255), -1)
-
-    return center_x, center_y, width, height, theta, depth, width_mid_x, width_mid_y, height_mid_x, height_mid_y, x_coords[3], y_coords[3], x_coords[0], y_coords[0], x_coords[2], y_coords[2], x_coords[1], y_coords[1]
-
 try:
     
     while True:
@@ -70,31 +112,11 @@ try:
             continue
 
         frame = np.asanyarray(color_frame.get_data())
-        results = model(frame)
-        obb_results = results[0].obb
-
-        unique_classes = torch.unique(obb_results.cls).cpu().numpy()
-        for cls_id in unique_classes:
-            class_filter = obb_results.cls == cls_id
-            class_confs = obb_results.conf[class_filter]
-            class_boxes = obb_results.xyxyxyxy[class_filter]
-            xywhr = obb_results.xywhr[class_filter]
-            xywhr[0][4] = xywhr[0][4] * (180 / np.pi)
-
-            if len(class_confs) > 0:
-                best_idx = torch.argmax(class_confs)
-                best_conf = class_confs[best_idx].item()
-                best_box = class_boxes[best_idx].cpu().numpy()
-
-                xc, yc, w, h, theta, depth, width_mid_x, width_mid_y, height_mid_x, height_mid_y, x1_x, x1_y, x2_x, x2_y, x3_x, x3_y, x4_x, x4_y = draw_bbox_with_depth(frame, depth_frame, best_box, f'Class {int(cls_id)}', best_conf, xywhr)
-                print([xc, yc, width_mid_x, width_mid_y, height_mid_x, height_mid_y])
-                
-        out.write(frame)
-        cv2.imshow("YOLOv11 OBB RealSense Inference with Depth", frame)
+        detect_feature_points(model, frame)
+        cv2.imshow("YOLOv8 OBB RealSense Inference with Depth", frame)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
 finally:
     pipeline.stop()
-    out.release
     cv2.destroyAllWindows()
