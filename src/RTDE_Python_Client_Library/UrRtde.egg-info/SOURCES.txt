@@ -1,0 +1,15 @@
+LICENSE
+README.md
+setup.cfg
+setup.py
+UrRtde.egg-info/PKG-INFO
+UrRtde.egg-info/SOURCES.txt
+UrRtde.egg-info/dependency_links.txt
+UrRtde.egg-info/top_level.txt
+rtde/__init__.py
+rtde/csv_binary_writer.py
+rtde/csv_reader.py
+rtde/csv_writer.py
+rtde/rtde.py
+rtde/rtde_config.py
+rtde/serialize.py
