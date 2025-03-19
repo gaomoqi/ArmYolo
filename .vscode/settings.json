@@ -1,7 +1,0 @@
-{
-    "python.analysis.extraPaths": [
-        "/home/gaomoqi/ArmYolo_ws/src/Record_Train",
-        "./src/RTDE_Python_Client_Library",
-        "./src/Train_new"
-    ]
-}

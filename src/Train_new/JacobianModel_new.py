@@ -5,24 +5,29 @@ class ImageJacobianNet(nn.Module):
     def __init__(self, input_size=6, hidden_sizes=[64], jacobian_size=12, dropout_rate=0.5):
         super(ImageJacobianNet, self).__init__()
         self.layers = nn.ModuleList()
-        
+        self.norms = nn.ModuleList()
+
         # 输入层到第一个隐藏层
         self.layers.append(nn.Linear(input_size, hidden_sizes[0]))
-
         # 添加多个隐藏层
         for i in range(len(hidden_sizes) - 1):
             self.layers.append(nn.Linear(hidden_sizes[i], hidden_sizes[i+1]))
-
         # 最后一个隐藏层到输出层
         self.layers.append(nn.Linear(hidden_sizes[-1], jacobian_size))
+
+        # 添加BatchNorm层
+        for size in hidden_sizes:
+            self.norms.append(nn.BatchNorm1d(size))
+
         self.relu = nn.LeakyReLU(negative_slope=0.01)
         self.dropout = nn.Dropout(dropout_rate)
-
+        
     def forward(self, points, tcp_velocity):
         
         x = points
         for i, layer in enumerate(self.layers[:-1]):
             x = layer(x)
+            x = self.norms[i](x)
             x = self.relu(x)
             x = self.dropout(x)
 

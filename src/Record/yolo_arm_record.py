@@ -21,12 +21,12 @@ def draw_bbox_with_depth(frame, bbox, track_id, conf, depth):
     cv2.rectangle(frame, (x_min, y_min), (x_max, y_max), color, thickness)
 
     # 计算特征点
-    center_x, center_y = (x_min + x_max) // 2, (y_min + y_max) // 2
+    center_x, center_y =int((x_min + x_max) // 2), int((y_min + y_max) // 2)
     width_mid_x, width_mid_y = center_x, y_max
     height_mid_x, height_mid_y = x_min, center_y
     # 计算边界框的宽度和高度
-    width = x_max - x_min
-    height = y_max - y_min
+    width = int(x_max - x_min)
+    height = int(y_max - y_min)
 
     # 标注特征点
     feature_color = (255, 0, 0)  # 蓝色点
@@ -57,7 +57,7 @@ def draw_bbox_with_depth(frame, bbox, track_id, conf, depth):
     cv2.putText(frame, label, (x_min, y_min - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, text_color, 2)
 
 # 确保输出目录存在
-output_dir = "/home/gaomoqi/ArmYolo_ws/data_2025_3_17"
+output_dir = "/home/gaomoqi/ArmYolo_ws/original_data/data_2025_3_18"
 os.makedirs(output_dir, exist_ok=True)
 timestamp = datetime.now().strftime("%Y_%m_%d_%H_%M")
 # Load the YOLO model
@@ -135,8 +135,8 @@ if __name__ == "__main__":
                        'height_mid_x', 'height_mid_y', 'x1_x', 'x1_y', 'x2_x', 'x2_y', 
                        'x3_x', 'x3_y', 'x4_x', 'x4_y', 'sample_time']"""
             # 计算特征点
-            x_min, y_min, x_max, y_max = best_box
-            xc, yc = (x_min + x_max) / 2, (y_min + y_max) / 2
+            x_min, y_min, x_max, y_max = map(int, best_box)
+            xc, yc = (x_min + x_max) // 2, (y_min + y_max) // 2
             w, h = x_max - x_min, y_max - y_min
             theta = 0  # Assuming no rotation for simplicity
             depth = depth_frame.get_distance(int(xc), int(yc))

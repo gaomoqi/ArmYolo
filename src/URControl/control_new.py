@@ -10,8 +10,12 @@ import joblib
 import os
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../Train_new")))
-from JacobianModel_new import ImageJacobianNet, model
-print(model)
+from JacobianModel_new import ImageJacobianNet, model as base_model
+from TransferModel import FineTuneModel,model as finetune_model
+
+
+print("base_model",base_model)
+print("finetune_model",finetune_model)
 def connect_to_ur5(ip, port):
     """建立与 UR5 机器人的 TCP 连接"""
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -142,16 +146,16 @@ def draw_bbox_with_depth(frame, bbox, track_id, conf, depth):
     # label = f"ID {track_id} | Conf: {conf:.2f}"
     # cv2.putText(frame, label, (x_min, y_min - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, text_color, 2)
     
-position_scaler = joblib.load('training_new/training_output_new_12/position_scaler.pkl') 
+position_scaler = joblib.load('TransferTraining/transfer_output_7/position_scaler.pkl') 
 # tcp_velocity_scaler = joblib.load('training_new/training_output_new_26/tcp_velocity_scaler.pkl')    
 # uvwh_scaler = joblib.load('training_new/training_output_new_26/output_scaler.pkl')
-jacbobian_model = torch.load("training_new/training_output_new_12/final_model.pt", map_location=torch.device('cpu'))
+jacbobian_model = torch.load("TransferTraining/transfer_output_7/fine_tuned_model.pt", map_location=torch.device('cpu'))
 jacbobian_model.eval()
-target_position = np.array([531, 293, 214, 250])  # 4输入
+target_position = np.array([395, 238, 278, 306])  # 4输入
 
 def main():
     # #----------记录数据---------#
-    data_dir = f"record_error_{time.strftime('%Y_%m_%d_%H_%M')}"
+    data_dir = f"record_error/record_error_{time.strftime('%Y_%m_%d_%H_%M')}"
     os.makedirs(data_dir, exist_ok=True)
     
     # 使用 mp4v 编解码器，创建 .mp4 文件
@@ -196,8 +200,8 @@ def main():
         feature_points_list.append(feature_points)
         frame_count += 1
 
-        if frame_count < 3:
-            continue
+        # if frame_count < 3:
+        #     continue
 
         # 计算特征点的平均值
         avg_feature_points = np.mean(feature_points_list, axis=0)

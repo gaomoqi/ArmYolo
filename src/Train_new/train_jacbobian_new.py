@@ -17,7 +17,7 @@ from JacobianModel_new import ImageJacobianNet, model
 
 
 # 创建输出目录
-base_output_dir = "training_new"
+base_output_dir = "training_new_output"
 if not os.path.exists(base_output_dir):
     os.makedirs(base_output_dir)
 
@@ -193,7 +193,7 @@ plt.close()
 
 # 保存最终模型
 torch.save(model, os.path.join(output_dir, 'final_model.pt'))
-
+print(f'Model saved at {output_dir}')
 # 记录训练结束信息
 log_info(log_file, f"\nTraining completed at: {time.strftime('%Y%m%d-%H%M%S')}")
 log_info(log_file, f"Best validation loss: {best_val_loss:.4f}")
