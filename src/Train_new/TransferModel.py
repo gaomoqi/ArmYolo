@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 # 加载之前训练好的模型
-model_path = 'training_new/training_output_new_with_norm/final_model.pt'
+model_path = 'training_new_output/training_output_new_1/final_model.pt'
 model = torch.load(model_path,weights_only=False)
 
 # 冻结之前的参数
@@ -29,9 +29,10 @@ class FineTuneModel(nn.Module):
         self.dropout = nn.Dropout(dropout_rate)
 
     def forward(self, points, tcp_velocity):
+        fake_xdot = torch.tensor([1, 1, 1], dtype=torch.float32)
         prediction, jacobian = self.base_model(points, tcp_velocity)
-        x = jacobian.view(-1, 12)
         
+        x = jacobian.view(-1, 12)
         for i,layer in enumerate(self.new_layer_list[:-1]):
             x = layer(x)
             x = self.batch_norm_list[i](x)

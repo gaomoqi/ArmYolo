@@ -4,8 +4,8 @@ import numpy as np
 import csv
 
 # 读取CSV文件
-filename = 'record_error/record_error_2025_03_19_19_10/error_log.csv'
-video_path = 'record_error/record_error_2025_03_19_19_10/output.mp4'
+filename = 'record_error/record_error_withnorm/error_log.csv'
+video_path = 'record_error/record_error_withnorm/output.mp4'
 
 data = []
 

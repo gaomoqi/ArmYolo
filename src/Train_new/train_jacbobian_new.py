@@ -12,7 +12,7 @@ import os
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler,MinMaxScaler
 
-from JacobianModel_new import ImageJacobianNet, model
+from JacobianModel_new import model
 
 
 
@@ -119,7 +119,7 @@ def validate(model, loader, criterion):
             
             # 分离xy位置和TCP速度
             points, tcp_velocity = inputs[:, :6], inputs[:, 6:]
-            
+
             outputs = model(points, tcp_velocity)
             prediction = outputs[0]
             jacobian = outputs[1]

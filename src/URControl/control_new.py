@@ -10,12 +10,12 @@ import joblib
 import os
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../Train_new")))
-from JacobianModel_new import ImageJacobianNet, model as base_model
-from TransferModel import FineTuneModel,model as finetune_model
+from JacobianModel_new import ImageJacobianNet
+from TransferModel import FineTuneModel
 
 
-print("base_model",base_model)
-print("finetune_model",finetune_model)
+# print("base_model",base_model)
+# print("finetune_model",finetune_model)
 def connect_to_ur5(ip, port):
     """建立与 UR5 机器人的 TCP 连接"""
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -146,10 +146,10 @@ def draw_bbox_with_depth(frame, bbox, track_id, conf, depth):
     # label = f"ID {track_id} | Conf: {conf:.2f}"
     # cv2.putText(frame, label, (x_min, y_min - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, text_color, 2)
     
-position_scaler = joblib.load('TransferTraining/transfer_output_7/position_scaler.pkl') 
+position_scaler = joblib.load('training_new_output/training_output_new_1/position_scaler.pkl') 
 # tcp_velocity_scaler = joblib.load('training_new/training_output_new_26/tcp_velocity_scaler.pkl')    
 # uvwh_scaler = joblib.load('training_new/training_output_new_26/output_scaler.pkl')
-jacbobian_model = torch.load("TransferTraining/transfer_output_7/fine_tuned_model.pt", map_location=torch.device('cpu'))
+jacbobian_model = torch.load("training_new_output/training_output_new_1/final_model.pt", map_location=torch.device('cpu'))
 jacbobian_model.eval()
 target_position = np.array([395, 238, 278, 306])  # 4输入
 
@@ -226,8 +226,8 @@ def main():
 
         image_speed_cmd = np.array([-error_cmd[i] * 1 for i in range(4)])  # u = -e*kp
         print("image_speed_cmd", image_speed_cmd, '\n')
-        fake_TCP_velocity = np.array([0.01, 0.01, 0.01])  # 虚拟TCP速度
-        jacobian_matrix = predict_jacobian(jacbobian_model, positions_xy, fake_TCP_velocity)  # 根据位置信息预测雅可比矩阵
+        fake_TCP_velocity = np.array([1, 1, 1])  # 虚拟TCP速度
+        jacobian_matrix = predict_jacobian(jacbobian_model, positions_xy, fake_TCP_velocity)[1]  # 根据位置信息预测雅可比矩阵
         jacobian_pinv = np.linalg.pinv(jacobian_matrix)  # 计算 (3, 4) 形状的伪逆
         # image_speed_cmd = uvwh_scaler.transform(image_speed_cmd.reshape(1, -1)).flatten()  # 归一化uvwh数据
         v_cmd = np.dot(jacobian_pinv, image_speed_cmd).flatten()  # 计算 (3, 4) @ (4,) -> (3,)

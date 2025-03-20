@@ -9,7 +9,7 @@ import joblib
 import os
 import time
 from datetime import datetime
-from TransferModel import FineTuneModel, fine_tune_model,model_path
+from TransferModel import FineTuneModel, fine_tune_model, model_path
 import matplotlib.pyplot as plt
 
 base_output_dir = '/home/gaomoqi/ArmYolo_ws/transfer_training_output'
@@ -88,8 +88,6 @@ def validate(model, loader, criterion):
             loss = criterion(prediction, targets)
             total_loss += loss.item()
     return total_loss / len(loader)
-
-# 自动检测当前文件夹的名称后缀
 
 
 # 训练循环
