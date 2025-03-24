@@ -12,7 +12,7 @@ import os
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler,MinMaxScaler
 
-from JacobianModel_new import model
+from JacobianModel import model
 
 
 
@@ -48,17 +48,10 @@ class CustomDataset(Dataset):
 
         # # 为位置创建StandardScaler
         self.position_scaler = MinMaxScaler(feature_range=(-1,1)).fit(self.positions)
-        # self.tcp_velocity_scaler = MinMaxScaler(feature_range=(-1,1)).fit(self.tcp_velocities)
-        # self.output_scaler = MinMaxScaler(feature_range=(-1,1)).fit(self.outputs)
         # # 对位置进行归一化
         self.positions = self.position_scaler.transform(self.positions)
-        # self.tcp_velocities = self.tcp_velocity_scaler.transform(self.tcp_velocities)
-        # self.outputs = self.output_scaler.transform(self.outputs)
-        
         # # 保存归一化器
         joblib.dump(self.position_scaler, os.path.join(output_dir, 'position_scaler.pkl'))
-        # joblib.dump(self.tcp_velocity_scaler, os.path.join(output_dir, 'tcp_velocity_scaler.pkl'))
-        # joblib.dump(self.output_scaler, os.path.join(output_dir, 'output_scaler.pkl'))
  
         
     def __len__(self):
@@ -70,7 +63,7 @@ class CustomDataset(Dataset):
         return torch.FloatTensor(inputs), torch.FloatTensor(self.outputs[idx])
 
 # 训练循环
-num_epochs = 500
+num_epochs = 700
 train_losses = []
 val_losses = []
 
@@ -79,15 +72,15 @@ dataset_path = 'cleaned_data/new_cleaned_data_9.csv'
 dataset = CustomDataset(dataset_path)
 train_data, val_data = train_test_split(dataset, test_size=0.2, random_state=42)
 
-train_loader = DataLoader(train_data, batch_size=128, shuffle=True)
-val_loader = DataLoader(val_data, batch_size=128, shuffle=False)
+train_loader = DataLoader(train_data, batch_size=64, shuffle=True)
+val_loader = DataLoader(val_data, batch_size=64, shuffle=False)
 
 # 初始化模型、损失函数和优化器
 criterion = nn.L1Loss()
 # criterion = nn.HuberLoss(delta=10.0)
 # criterion = nn.MSELoss()
 optimizer = optim.Adam(model.parameters(), lr=0.005)
-scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.75, patience=20, verbose=True)
+scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=20, verbose=True)
 # scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=num_epochs)
 # 训练函数
 def train_epoch(model, loader, criterion, optimizer):
@@ -179,20 +172,9 @@ plt.legend()
 plt.savefig(os.path.join(output_dir, 'loss_curve.png'))
 plt.close()
 
-# # 绘制模型参数变化曲线
-# for name, values in param_history.items():
-#     plt.figure(figsize=(10, 5))
-#     for i in range(len(values[0])):
-#         plt.plot([v[i] for v in values], label=f'{name}_{i}')
-#     plt.xlabel('Epoch')
-#     plt.ylabel('Parameter Value')
-#     plt.legend()
-#     plt.title(f'Parameter changes for {name}')
-#     plt.savefig(os.path.join(output_dir, f'{name}_param_changes.png'))
-#     plt.close()
-
 # 保存最终模型
-torch.save(model, os.path.join(output_dir, 'final_model.pt'))
+# torch.save(model, os.path.join(output_dir, 'final_model.pt'))
+torch.save(model.state_dict(), os.path.join(output_dir, 'final_model.pt'))
 print(f'Model saved at {output_dir}')
 # 记录训练结束信息
 log_info(log_file, f"\nTraining completed at: {time.strftime('%Y%m%d-%H%M%S')}")

@@ -1,47 +1,34 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
-# 加载之前训练好的模型
-model_path = 'training_new_output/training_output_new_1/final_model.pt'
-model = torch.load(model_path,weights_only=False)
 
-# 冻结之前的参数
-for param in model.parameters():
-    param.requires_grad = False
+from JacobianModel import ImageJacobianNet
 
-# 添加新的层
-class FineTuneModel(nn.Module):
-    def __init__(self, base_model ,hidden_sizes=[64, 64], jacobian_size=12, dropout_rate=0):
+class FineTuneModel(ImageJacobianNet):
+    def __init__(self):
         super(FineTuneModel, self).__init__()
-        self.base_model = base_model
-        self.new_layer_list = nn.ModuleList()
-        self.batch_norm_list = nn.ModuleList()
 
-        for size in hidden_sizes:
-            self.batch_norm_list.append(nn.BatchNorm1d(size))
+        for i in range(len(self.layers) - 1):
+            for param in self.layers[i].parameters():
+                param.requires_grad = False  # 冻结所有层的Linear
 
-        self.new_layer_list.append(nn.Linear(12, hidden_sizes[0]))#12 jacobian_size input
-        for i in range(len(hidden_sizes) - 1):
-            self.new_layer_list.append(nn.Linear(hidden_sizes[i], hidden_sizes[i+1]))
-        self.new_layer_list.append(nn.Linear(hidden_sizes[-1], jacobian_size))
+        for i in range(len(self.bn_layers)):
+            for param in self.bn_layers[i].parameters():
+                param.requires_grad = False  # 冻结所有层的BatchNorm1d
 
-        self.relu = nn.LeakyReLU(negative_slope=0.01)
-        self.dropout = nn.Dropout(dropout_rate)
 
-    def forward(self, points, tcp_velocity):
-        fake_xdot = torch.tensor([1, 1, 1], dtype=torch.float32)
-        prediction, jacobian = self.base_model(points, tcp_velocity)
-        
-        x = jacobian.view(-1, 12)
-        for i,layer in enumerate(self.new_layer_list[:-1]):
-            x = layer(x)
-            x = self.batch_norm_list[i](x)
-            x = self.relu(x)
-            x = self.dropout(x)
-        x = self.new_layer_list[-1](x)#12 jacobian_size output
-        new_jacobian = x.view(-1, 4, 3)
-        output = torch.bmm(new_jacobian, tcp_velocity.unsqueeze(2)).squeeze(2)
-        return output, new_jacobian
+    def forward(self, p, xdot):
+        return super(FineTuneModel, self).forward(p, xdot)
 
-# 初始化新的模型
-fine_tune_model = FineTuneModel(model).cuda()
+# 加载预训练模型的权重
+pretrained_model_path = 'training_new_output/training_output_new_13/final_model.pt'
+pretrained_state_dict = torch.load(pretrained_model_path)
+
+# 创建新模型实例并移动到GPU
+fine_tune_model = FineTuneModel().cuda()
+# 加载过滤后的状态字典到新模型
+fine_tune_model.load_state_dict(pretrained_state_dict, strict=False)
+
+# 打印模型结构，确认哪些层是可训练的
+for name, param in fine_tune_model.named_parameters():
+    print(f"{name}: {param.requires_grad}")

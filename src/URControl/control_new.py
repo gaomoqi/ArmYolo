@@ -10,8 +10,8 @@ import joblib
 import os
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../Train_new")))
-from JacobianModel_new import ImageJacobianNet
-from TransferModel import FineTuneModel
+from JacobianModel import ImageJacobianNet
+# from TransferModel import FineTuneModel
 
 
 # print("base_model",base_model)
@@ -146,12 +146,14 @@ def draw_bbox_with_depth(frame, bbox, track_id, conf, depth):
     # label = f"ID {track_id} | Conf: {conf:.2f}"
     # cv2.putText(frame, label, (x_min, y_min - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, text_color, 2)
     
-position_scaler = joblib.load('training_new_output/training_output_new_1/position_scaler.pkl') 
+position_scaler = joblib.load('training_new_output/training_output_new_11/position_scaler.pkl') 
 # tcp_velocity_scaler = joblib.load('training_new/training_output_new_26/tcp_velocity_scaler.pkl')    
 # uvwh_scaler = joblib.load('training_new/training_output_new_26/output_scaler.pkl')
-jacbobian_model = torch.load("training_new_output/training_output_new_1/final_model.pt", map_location=torch.device('cpu'))
-jacbobian_model.eval()
-target_position = np.array([395, 238, 278, 306])  # 4输入
+state_dict = torch.load("training_new_output/training_output_new_11/final_model.pt")
+jacobian_model = ImageJacobianNet()
+jacobian_model.load_state_dict(state_dict)
+jacobian_model.eval()
+target_position = np.array([392, 263, 125, 162])  # 4输入
 
 def main():
     # #----------记录数据---------#
@@ -166,11 +168,15 @@ def main():
     error_log = open(os.path.join(data_dir, 'error_log.csv'), 'w')
     error_log.write("timestamp,frame_number,error_cmd_x1,error_cmd_y1,error_cmd_x2,error_cmd_y2,error_cmd_x3,error_cmd_y3\n")
 
+     # 打开 CSV 文件用于记录 v_cmd 和时间戳
+    v_cmd_log = open(os.path.join(data_dir, 'v_cmd_log.csv'), 'w')
+    v_cmd_log.write("timestamp,frame_number,v_cmd_x,v_cmd_y,v_cmd_z\n")
+
     frame_number = 0
     start_time = time.time()
     #-----------------------------------#
 
-    ur5_ip = "10.149.230.1"
+    ur5_ip = "10.149.230.168"
     port = 30002
     error_threshold = 10  # 误差阈值
     
@@ -196,27 +202,16 @@ def main():
         feature_points = detect_feature_points(yolo_model, frame)
         if feature_points is None:
             continue
-
-        feature_points_list.append(feature_points)
         frame_count += 1
 
-        # if frame_count < 3:
-        #     continue
-
-        # 计算特征点的平均值
-        avg_feature_points = np.mean(feature_points_list, axis=0)
-        feature_points_list = []
-        frame_count = 0
-
-        positions_xy = avg_feature_points[:6]
-        features = avg_feature_points[6:]
+        positions_xy = feature_points[:6]
+        features = feature_points[6:]
         cv2.imshow("frame", frame)
         if cv2.waitKey(1) == ord('q'):
             break
 
         error_cmd = features - target_position
-        error = np.linalg.norm(features - target_position)  # 计算误差
-
+    
         # 记录 error_cmd 和时间戳
         error_log.write(f"{elapsed_time},{frame_number},{error_cmd[0]},{error_cmd[1]},{error_cmd[2]},{error_cmd[3]}\n")
         cv2.putText(frame, f"Time: {elapsed_time:.3f}s Frame: {frame_number}", 
@@ -224,22 +219,26 @@ def main():
         video_out.write(frame)
         error_log.flush()  # 确保数据立即写入文件
 
+        #---------------------------control----------------#
         image_speed_cmd = np.array([-error_cmd[i] * 1 for i in range(4)])  # u = -e*kp
         print("image_speed_cmd", image_speed_cmd, '\n')
         fake_TCP_velocity = np.array([1, 1, 1])  # 虚拟TCP速度
-        jacobian_matrix = predict_jacobian(jacbobian_model, positions_xy, fake_TCP_velocity)[1]  # 根据位置信息预测雅可比矩阵
+        jacobian_matrix = predict_jacobian(jacobian_model, positions_xy, fake_TCP_velocity) # 根据位置信息预测雅可比矩阵
         jacobian_pinv = np.linalg.pinv(jacobian_matrix)  # 计算 (3, 4) 形状的伪逆
-        # image_speed_cmd = uvwh_scaler.transform(image_speed_cmd.reshape(1, -1)).flatten()  # 归一化uvwh数据
         v_cmd = np.dot(jacobian_pinv, image_speed_cmd).flatten()  # 计算 (3, 4) @ (4,) -> (3,)
-        # v_cmd = tcp_velocity_scaler.inverse_transform(v_cmd.reshape(1, -1)).flatten()  # 反归一化v_cmd
+        #---------------------------------------------------#
+
+        v_cmd_log.write(f"{elapsed_time},{frame_number},{v_cmd[0]},{v_cmd[1]},{v_cmd[2]}\n")
+        v_cmd_log.flush()  # 确保数据立即写入文件
+
         ur_script = generate_urscript(v_cmd)
         print("URScript:", ur_script)
         sock.sendall(ur_script.encode('utf-8'))
 
         time.sleep(0.1)
 
-    # error_log.close()
-    # video_out.release()
+    error_log.close()
+    video_out.release()
     cv2.destroyAllWindows()
     pipeline.stop()
 

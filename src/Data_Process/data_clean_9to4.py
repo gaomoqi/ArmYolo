@@ -96,6 +96,6 @@ def process_data(image_file, robot_file, output_dir="cleaned_data"):
     print(f"数据处理完成，结果已保存为 '{output_file}'")
 
 if __name__ == "__main__":
-    image_file = 'original_data/data_2025_3_18/image_data_2025_03_18_19_46.csv'
-    robot_file = 'original_data/data_2025_3_18/robot_data_2025_03_18_19_46.csv'
+    image_file = 'original_data/data_2025_3_20/image_data_2025_03_20_21_07.csv'
+    robot_file = 'original_data/data_2025_3_20/robot_data_2025_03_20_21_07.csv'
     process_data(image_file, robot_file)

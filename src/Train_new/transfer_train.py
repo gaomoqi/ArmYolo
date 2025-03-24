@@ -9,7 +9,7 @@ import joblib
 import os
 import time
 from datetime import datetime
-from TransferModel import FineTuneModel, fine_tune_model, model_path
+from TransferModel import FineTuneModel, fine_tune_model, pretrained_model_path
 import matplotlib.pyplot as plt
 
 base_output_dir = '/home/gaomoqi/ArmYolo_ws/transfer_training_output'
@@ -48,17 +48,17 @@ class CustomDataset(Dataset):
         return torch.FloatTensor(inputs), torch.FloatTensor(self.outputs[idx])
 
 
-dataset_path = 'cleaned_data/new_cleaned_data_10.csv'
+dataset_path = 'cleaned_data/new_cleaned_data_11.csv'
 dataset = CustomDataset(dataset_path)
 train_data, val_data = train_test_split(dataset, test_size=0.2, random_state=42)
 
-train_loader = DataLoader(train_data, batch_size=128, shuffle=True)
-val_loader = DataLoader(val_data, batch_size=128, shuffle=False)
+train_loader = DataLoader(train_data, batch_size=64, shuffle=True)
+val_loader = DataLoader(val_data, batch_size=64, shuffle=False)
 
 # 设置损失函数和优化器
 criterion = nn.L1Loss()
-optimizer = optim.Adam(fine_tune_model.parameters(), lr=0.005)
-scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.75, patience=20, verbose=True)
+optimizer = optim.Adam([p for p in fine_tune_model.parameters() if p.requires_grad], lr=0.01)
+scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=20, verbose=True)
 
 # 训练和验证函数
 def train_epoch(model, loader, criterion, optimizer):
@@ -98,7 +98,7 @@ val_losses = []
 log_file = os.path.join(output_dir, 'training_log.txt')
 with open(log_file, 'w') as f:
     f.write(f'Model: {fine_tune_model}\n')
-    f.write(f'Base Model path: {model_path}\n')
+    f.write(f'Base Model path: { pretrained_model_path}\n')
     f.write(f'Dataset path: {dataset_path}\n')
     f.write(f'Number of epochs: {num_epochs}\n')
     f.write(f'Batch size: {train_loader.batch_size}\n')
