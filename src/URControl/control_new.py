@@ -10,12 +10,9 @@ import joblib
 import os
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../Train_new")))
-from JacobianModel import ImageJacobianNet
-# from TransferModel import FineTuneModel
+from JacobianModel import ImageJacobianNet 
+from TransferModel import FineTuneModel
 
-
-# print("base_model",base_model)
-# print("finetune_model",finetune_model)
 def connect_to_ur5(ip, port):
     """建立与 UR5 机器人的 TCP 连接"""
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -68,7 +65,7 @@ def detect_feature_points(model, frame):
 
     return np.array([center_x, center_y, width_mid_x, width_mid_y, height_mid_x, height_mid_y, center_x, center_y, width, height])
 
-def predict_jacobian(model, position, tcp_velocity = np.array([0.01,0.01,0.01])):
+def predict_jacobian(model, position, tcp_velocity = np.array([1,1,1])):
     if position.shape != (6,) or tcp_velocity.shape != (3,):
         return None
     # 归一化输入数据
@@ -85,10 +82,10 @@ def predict_jacobian(model, position, tcp_velocity = np.array([0.01,0.01,0.01]))
 
 def generate_urscript(v_cmd):
     # print("speed_cmd",v_cmd,"\n")
-    v_cmd = [max(min(v_cmd[i], 0.02), -0.02) for i in range(3)]# 限定速度范围0.05
+    v_cmd = [max(min(v_cmd[i], 0.03), -0.03) for i in range(3)]# 限定速度范围0.05
     v_cmd [3:6] = [0,0,0]
     ur_script = f"""
-    speedl({v_cmd}, a=0.1, t=1)
+    speedl({v_cmd}, a=0.1, t=0.5)
     """
     return ur_script
 
@@ -146,14 +143,15 @@ def draw_bbox_with_depth(frame, bbox, track_id, conf, depth):
     # label = f"ID {track_id} | Conf: {conf:.2f}"
     # cv2.putText(frame, label, (x_min, y_min - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, text_color, 2)
     
-position_scaler = joblib.load('training_new_output/training_output_new_11/position_scaler.pkl') 
+position_scaler = joblib.load('transfer_training_output/transfer_output_1/position_standard_scaler.pkl') 
 # tcp_velocity_scaler = joblib.load('training_new/training_output_new_26/tcp_velocity_scaler.pkl')    
 # uvwh_scaler = joblib.load('training_new/training_output_new_26/output_scaler.pkl')
-state_dict = torch.load("training_new_output/training_output_new_11/final_model.pt")
-jacobian_model = ImageJacobianNet()
+state_dict = torch.load("transfer_training_output/transfer_output_1/fine_tuned_model.pt")
+# jacobian_model = ImageJacobianNet()
+jacobian_model = FineTuneModel()
 jacobian_model.load_state_dict(state_dict)
 jacobian_model.eval()
-target_position = np.array([392, 263, 125, 162])  # 4输入
+target_position = np.array([429, 171, 235, 274])  # 4输入
 
 def main():
     # #----------记录数据---------#
@@ -176,7 +174,7 @@ def main():
     start_time = time.time()
     #-----------------------------------#
 
-    ur5_ip = "10.149.230.168"
+    ur5_ip = "10.149.230.1"
     port = 30002
     error_threshold = 10  # 误差阈值
     
@@ -190,7 +188,6 @@ def main():
     pipeline.start(config)
     
     frame_count = 0
-    feature_points_list = []
 
     while True:
         frame = get_camera_frame(pipeline)
@@ -211,7 +208,12 @@ def main():
             break
 
         error_cmd = features - target_position
-    
+        # error_threshold = np.array([10, 10, 10, 10])
+        # # 检查误差是否超过阈值
+        # if np.all(np.abs(error_cmd) < error_threshold):
+        #     print("stop! error:", error_cmd)
+        #     continue
+
         # 记录 error_cmd 和时间戳
         error_log.write(f"{elapsed_time},{frame_number},{error_cmd[0]},{error_cmd[1]},{error_cmd[2]},{error_cmd[3]}\n")
         cv2.putText(frame, f"Time: {elapsed_time:.3f}s Frame: {frame_number}", 

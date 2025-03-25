@@ -5,7 +5,6 @@ from torch.utils.data import Dataset, DataLoader
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
 import time
 import os
@@ -47,11 +46,12 @@ class CustomDataset(Dataset):
         self.outputs = self.data[:, 9:]  # 4维识别框变化速度
 
         # # 为位置创建StandardScaler
-        self.position_scaler = MinMaxScaler(feature_range=(-1,1)).fit(self.positions)
+        # self.position_scaler = MinMaxScaler(feature_range=(-1,1)).fit(self.positions)
+        self.position_scaler = StandardScaler().fit(self.positions)
         # # 对位置进行归一化
         self.positions = self.position_scaler.transform(self.positions)
         # # 保存归一化器
-        joblib.dump(self.position_scaler, os.path.join(output_dir, 'position_scaler.pkl'))
+        joblib.dump(self.position_scaler, os.path.join(output_dir, 'position_standard_scaler.pkl'))
  
         
     def __len__(self):
@@ -63,7 +63,7 @@ class CustomDataset(Dataset):
         return torch.FloatTensor(inputs), torch.FloatTensor(self.outputs[idx])
 
 # 训练循环
-num_epochs = 700
+num_epochs = 500
 train_losses = []
 val_losses = []
 

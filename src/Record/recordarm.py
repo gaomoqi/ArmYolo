@@ -38,7 +38,7 @@ timestamp = datetime.now().strftime("%Y_%m_%d_%H_%M")
 # parameters
 parser = argparse.ArgumentParser()
 parser.add_argument(
-    "--host", default="10.149.230.168", help="name of host to connect to (localhost)"
+    "--host", default="10.149.230.1", help="name of host to connect to (localhost)"
 )
 parser.add_argument("--port", type=int, default=30004, help="port number (30004)")
 parser.add_argument(

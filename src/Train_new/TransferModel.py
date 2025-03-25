@@ -21,7 +21,7 @@ class FineTuneModel(ImageJacobianNet):
         return super(FineTuneModel, self).forward(p, xdot)
 
 # 加载预训练模型的权重
-pretrained_model_path = 'training_new_output/training_output_new_13/final_model.pt'
+pretrained_model_path = 'training_new_output/training_output_new_4/final_model.pt'
 pretrained_state_dict = torch.load(pretrained_model_path)
 
 # 创建新模型实例并移动到GPU

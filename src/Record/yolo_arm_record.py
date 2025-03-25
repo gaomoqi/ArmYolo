@@ -57,7 +57,7 @@ def draw_bbox_with_depth(frame, bbox, track_id, conf, depth):
     cv2.putText(frame, label, (x_min, y_min - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, text_color, 2)
 
 # 确保输出目录存在
-output_dir = "/home/gaomoqi/ArmYolo_ws/original_data/data_2025_3_20"
+output_dir = "/home/gaomoqi/ArmYolo_ws/original_data/data_2025_3_24_zeroxdot"
 os.makedirs(output_dir, exist_ok=True)
 timestamp = datetime.now().strftime("%Y_%m_%d_%H_%M")
 # Load the YOLO model

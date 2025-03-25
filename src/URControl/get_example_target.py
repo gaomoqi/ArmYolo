@@ -34,8 +34,8 @@ def detect_feature_points(model, frame):
     center_x, center_y = int((x_min + x_max) / 2), int((y_min + y_max) / 2)
     width_mid_x, width_mid_y = int((x_min + x_max) / 2), int(y_max)
     height_mid_x, height_mid_y = int(x_min), int((y_min + y_max) / 2)
-    width = x_max - x_min
-    height = y_max - y_min
+    width = int(x_max - x_min)
+    height = int(y_max - y_min)
 
     print(f"Track ID {best_track_id} | image_info:", [center_x, center_y, width, height])
 

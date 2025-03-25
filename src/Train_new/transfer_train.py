@@ -36,9 +36,9 @@ class CustomDataset(Dataset):
         self.tcp_velocities = self.data[:, 6:9]
         self.outputs = self.data[:, 9:]
 
-        self.position_scaler = MinMaxScaler(feature_range=(-1, 1)).fit(self.positions)
+        self.position_scaler = StandardScaler().fit(self.positions)
         self.positions = self.position_scaler.transform(self.positions)
-        joblib.dump(self.position_scaler, os.path.join(output_dir, 'position_scaler.pkl'))
+        joblib.dump(self.position_scaler, os.path.join(output_dir, 'position_standard_scaler.pkl'))
 
     def __len__(self):
         return len(self.positions)
@@ -121,7 +121,7 @@ for epoch in range(num_epochs):
     scheduler.step(train_loss)
 
 # 保存微调后的模型
-torch.save(fine_tune_model, os.path.join(output_dir, 'fine_tuned_model.pt'))
+torch.save(fine_tune_model.state_dict(), os.path.join(output_dir, 'fine_tuned_model.pt'))
 
 # 绘制损失曲线
 plt.figure(figsize=(10, 5))

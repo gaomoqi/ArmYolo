@@ -4,7 +4,7 @@ import numpy as np
 import csv
 import os
 
-path = "record_error/record_error_new_5"
+path = "record_error/record_error_2025_03_24_21_09"
 error_filename = os.path.join(path, "error_log.csv")
 v_cmd_filename = os.path.join(path, "v_cmd_log.csv")
 video_path = os.path.join(path, "output.mp4")
