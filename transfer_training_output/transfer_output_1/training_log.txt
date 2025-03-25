@@ -9,10 +9,13 @@ Model: FineTuneModel(
     (1): BatchNorm1d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
     (2): BatchNorm1d(60, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
   )
+  (dropout_layers): ModuleList(
+    (0-2): 3 x Dropout(p=0.5, inplace=False)
+  )
   (fc4): Linear(in_features=60, out_features=4, bias=False)
   (leaky_relu): LeakyReLU(negative_slope=0.01)
 )
-Base Model path: training_new_output/training_output_new_13/final_model.pt
+Base Model path: training_new_output/training_output_new_4/final_model.pt
 Dataset path: cleaned_data/new_cleaned_data_11.csv
 Number of epochs: 200
 Batch size: 64
@@ -31,4 +34,4 @@ Parameter Group 0
     maximize: False
     weight_decay: 0
 )
-Scheduler: <torch.optim.lr_scheduler.ReduceLROnPlateau object at 0x7fe1680859a0>
+Scheduler: <torch.optim.lr_scheduler.ReduceLROnPlateau object at 0x764868030c70>

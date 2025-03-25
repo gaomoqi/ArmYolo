@@ -9,6 +9,9 @@ Model structure: ImageJacobianNet(
     (1): BatchNorm1d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
     (2): BatchNorm1d(60, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
   )
+  (dropout_layers): ModuleList(
+    (0-2): 3 x Dropout(p=0.5, inplace=False)
+  )
   (fc4): Linear(in_features=60, out_features=4, bias=False)
   (leaky_relu): LeakyReLU(negative_slope=0.01)
 )
@@ -27,13 +30,13 @@ Parameter Group 0
 )
 Learning rate: 0.005
 Batch size: 64
-Number of epochs: 700
+Number of epochs: 500
 dataset: cleaned_data/new_cleaned_data_9.csv
 Train dataset size: 3225
 Validation dataset size: 807
 Epoch,Train Loss,Validation Loss,Learning Rate
 
-Training completed at: 20250322-160453
+Training completed at: 20250324-203714
 Best validation loss: inf
-Final training loss: 14.2998
-Final validation loss: 15.7856
+Final training loss: 14.1449
+Final validation loss: 15.8291
